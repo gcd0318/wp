@@ -1,5 +1,5 @@
 """
-CREATE TABLE `post` (
+CREATE TABLE `post_record` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `post_date` varchar(45) NOT NULL,
   `post_num` int(11) NOT NULL DEFAULT '0',
@@ -34,7 +34,7 @@ def fetch(params):
         post_num = -1
         datestr = gen_datestr(start_date, delta)
         try:
-            sqls.append("insert into wp.post (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
+            sqls.append("insert into wp.post_record (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
             page = urllib.request.urlopen(root+gen_datestr(datestr)).read().decode('utf8')
             fn = datestr+'/page.html'
             if(not os.path.exists(datestr)):
@@ -45,10 +45,12 @@ def fetch(params):
             delta = delta + 1
 #            sqls.append("insert into wp.post (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
         except Exception as err:
+            e = str(err)
             if(urllib.error.HTTPError == type(err))and(404 == err.code):
                 delta = delta + 1
                 post_num = 0
-            sqls.append("update wp.post set status = '" + str(err) + "', post_num =" + str(post_num) + " where post_date = '" + datestr + "';")
+                e = '404'
+            sqls.append("update wp.post_record set status = '" + e + "', post_num =" + str(post_num) + " where post_date = '" + datestr + "';")
         finally:
             for sql in sqls:
                 print(sql)
