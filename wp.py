@@ -6,8 +6,9 @@ CREATE TABLE `post` (
   `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `status` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idid_UNIQUE` (`id`)
+  UNIQUE KEY `id` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 """
 
 import threading, time, datetime, os
@@ -30,9 +31,10 @@ def fetch(params):
     delta = 0
     while(True):
         sqls = []
-        post_num = 0
+        post_num = -1
         datestr = gen_datestr(start_date, delta)
         try:
+            sqls.append("insert into wp.post (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
             page = urllib.request.urlopen(root+gen_datestr(datestr)).read().decode('utf8')
             fn = datestr+'/page.html'
             if(not os.path.exists(datestr)):
@@ -41,24 +43,27 @@ def fetch(params):
             f.write(page)
             f.close()
             delta = delta + 1
-            sqls.append("insert into wp.post (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
+#            sqls.append("insert into wp.post (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
         except Exception as err:
             if(urllib.error.HTTPError == type(err))and(404 == err.code):
                 delta = delta + 1
-                post_num = -1
-                sqls.append("update wp.post set status = '" + str(err) + "' where datestr = '" + datestr + "';")
+                post_num = 0
+            sqls.append("update wp.post set status = '" + str(err) + "', post_num =" + str(post_num) + " where post_date = '" + datestr + "';")
         finally:
-            print(sqls)
+            for sql in sqls:
+                print(sql)
+                db(params, sql)
             time.sleep(5)
     
 
 def parse_txt(txt):
     tmp = txt
 
-def db(cnx, sql):
+def db(params, sql):
+    cnx = connection.MySQLConnection(user=params['db']['dbuser'], password=params['db']['dbpassword'],host=params['db']['dbhost'])
     c = cnx.cursor()
     c.execute(sql)
-    conn.commit()
+    cnx.commit()
     c.close()
 
 def init():
@@ -79,7 +84,7 @@ def init():
     c.execute('select post_date from wp.post order by post_date desc limit 1')
     sd = c.fetchall()
     if(0 < len(sd)):
-        params['start_date'] = sd[0]
+        params['start_date'] = sd[0][0]
     else:
         params['start_date'] = start_date
     c.close()
