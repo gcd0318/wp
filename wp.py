@@ -1,7 +1,14 @@
 """
-'post', 'CREATE TABLE `post` (\n  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,\n  `post_date` varchar(45) NOT NULL,\n  `post_num` int(11) NOT NULL DEFAULT \'0\',\n  `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `idid_UNIQUE` (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8'
+CREATE TABLE `post` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `post_date` varchar(45) NOT NULL,
+  `post_num` int(11) NOT NULL DEFAULT '0',
+  `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `status` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idid_UNIQUE` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 """
-
 
 import threading, time, datetime, os
 import urllib.request, urllib.error
