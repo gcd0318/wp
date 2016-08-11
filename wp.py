@@ -4,7 +4,7 @@
 
 
 import threading, time, datetime, os
-import urllib.request
+import urllib.request, urllib.error
 import mysql.connector
 from mysql.connector import connection
 
@@ -22,21 +22,26 @@ def fetch(params):
     start_date = params['start_date']
     delta = 0
     while(True):
+        sqls = []
+        post_num = 0
+        datestr = gen_datestr(start_date, delta)
         try:
-            datestr = gen_datestr(start_date, delta)
-            if(not os.path.exists(datestr)):
-                os.makedirs(datestr)
             page = urllib.request.urlopen(root+gen_datestr(datestr)).read().decode('utf8')
             fn = datestr+'/page.html'
+            if(not os.path.exists(datestr)):
+                os.makedirs(datestr)
             f = open(fn, 'w', encoding='utf8')
-            print(page, file=f)
+            f.write(page)
             f.close()
-            sql = "insert into wp.post (post_date, post_num) values('"+datestr+"', 0)"
-            print(sql)
             delta = delta + 1
+            sqls.append("insert into wp.post (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
         except Exception as err:
-            print(err)
+            if(urllib.error.HTTPError == type(err))and(404 == err.code):
+                delta = delta + 1
+                post_num = -1
+                sqls.append("update wp.post set status = '" + str(err) + "' where datestr = '" + datestr + "';")
         finally:
+            print(sqls)
             time.sleep(5)
     
 
@@ -77,24 +82,16 @@ def init():
 
 if('__main__' == __name__):
     params = init()
-    print(params)
-    start_date = params['start_date']
-    root = params['root']
-    db = params['db']
-    fetch(params)
 
-
-"""
     ts = []
-    t1 = threading.Thread(target=fetch, args=())
+    t1 = threading.Thread(target=fetch, args=(params,))
     ts.append(t1)
-    t2 = threading.Thread(target=gen_txt, args=())
-    ts.append(t2)
-    t3 = threading.Thread(target=parse, args=())
-    ts.append(t3)
-    t4 = threading.Thread(target=static, args=())
-    ts.append(t4)
+#    t2 = threading.Thread(target=gen_txt, args=())
+#    ts.append(t2)
+#    t3 = threading.Thread(target=parse, args=())
+#    ts.append(t3)
+#    t4 = threading.Thread(target=static, args=())
+#    ts.append(t4)
     for t in ts:
 #        t.setDaemon(True)
         t.start()
-"""
