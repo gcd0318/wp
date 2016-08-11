@@ -34,7 +34,7 @@ def fetch(params):
         post_num = -1
         datestr = gen_datestr(start_date, delta)
         try:
-            sqls.append("insert into wp.post_record (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
+            sqls.append("insert into post_record (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
             page = urllib.request.urlopen(root+gen_datestr(datestr)).read().decode('utf8')
             fn = datestr+'/page.html'
             if(not os.path.exists(datestr)):
@@ -43,14 +43,14 @@ def fetch(params):
             f.write(page)
             f.close()
             delta = delta + 1
-#            sqls.append("insert into wp.post (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
+#            sqls.append("insert into post_record (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
         except Exception as err:
             e = str(err)
             if(urllib.error.HTTPError == type(err))and(404 == err.code):
                 delta = delta + 1
                 post_num = 0
                 e = '404'
-            sqls.append("update wp.post_record set status = '" + e + "', post_num =" + str(post_num) + " where post_date = '" + datestr + "';")
+            sqls.append("update post_record set status = '" + e + "', post_num =" + str(post_num) + " where post_date = '" + datestr + "';")
         finally:
             for sql in sqls:
                 print(sql)
@@ -58,15 +58,31 @@ def fetch(params):
             time.sleep(5)
     
 
+def gen_txt(params):
+    while(True):
+        posts = db(params, 'select post_date from post_record where post_num = -1')
+        for ps in posts:
+            post_date = ps[0]
+            f = open(post_date+'/page.html', 'r')
+            ls = f.readlines()
+            f.close()
+            print(len(ls))
+
+
 def parse_txt(txt):
     tmp = txt
 
 def db(params, sql):
-    cnx = connection.MySQLConnection(user=params['db']['dbuser'], password=params['db']['dbpassword'],host=params['db']['dbhost'])
+    sql = sql.strip()
+    res = None
+    cnx = connection.MySQLConnection(user=params['db']['dbuser'], password=params['db']['dbpassword'],host=params['db']['dbhost'],database=params['db']['database'])
     c = cnx.cursor()
     c.execute(sql)
+    if(sql.startswith('select')):
+        res = c.fetchall()
     cnx.commit()
     c.close()
+    return res
 
 def init():
     start_date = '2005/08/28'
@@ -76,21 +92,20 @@ def init():
               'tail':'<!-- begin footer -->',\
 #              'head': '<h3 class="storytitle">',\
 #              'tail':'<h3 class="sd-title">Rate this:</h3>',\
-              'db':{'dbhost':'localhost',\
-                    'dbuser':'root',\
-                    'dbpassword':'root',\
+              'db':{'dbhost':'192.168.1.18',\
+                    'dbuser':'wp',\
+                    'dbpassword':'wp',\
+#              'db':{'dbhost':'localhost',\
+#                    'dbuser':'root',\
+#                    'dbpassword':'root',\
+                    'database':'wp',\
                 },\
               }
-    cnx = connection.MySQLConnection(user=params['db']['dbuser'], password=params['db']['dbpassword'],host=params['db']['dbhost'])
-    c = cnx.cursor()
-    c.execute('select post_date from wp.post order by post_date desc limit 1')
-    sd = c.fetchall()
+    sd = db(params, 'select post_date from post_record order by post_date desc limit 1')
     if(0 < len(sd)):
         params['start_date'] = sd[0][0]
     else:
         params['start_date'] = start_date
-    c.close()
-    cnx.close()
     return params
 
 
@@ -98,10 +113,10 @@ if('__main__' == __name__):
     params = init()
 
     ts = []
-    t1 = threading.Thread(target=fetch, args=(params,))
-    ts.append(t1)
-#    t2 = threading.Thread(target=gen_txt, args=())
-#    ts.append(t2)
+#    t1 = threading.Thread(target=fetch, args=(params,))
+#    ts.append(t1)
+    t2 = threading.Thread(target=gen_txt, args=(params,))
+    ts.append(t2)
 #    t3 = threading.Thread(target=parse, args=())
 #    ts.append(t3)
 #    t4 = threading.Thread(target=static, args=())
