@@ -12,13 +12,21 @@ CREATE TABLE `post_record` (
 """
 
 import threading, time, datetime, os
-import urllib.request, urllib.error
-import mysql.connector
-from mysql.connector import connection
+from html.parser import HTMLParser
 
+class WPHTMLParser(HTMLParser):
+    def handle_starttag(self, tag, attrs):
+        print("Encountered a start tag:", tag)
+        print("Encountered a start attrs:", attrs)
+
+    def handle_endtag(self, tag):
+        print("Encountered an end tag :", tag)
+
+    def handle_data(self, data):
+        print("Encountered some data  :", data)
 
 def cutstr(s, h, t):
-    return s[s.find(s):s.rfind(t)]
+    return s[s.find(h):s.rfind(t)]
 
 def gen_datestr(dtstr, delta=0, fmt='%Y/%m/%d'):
     nt = time.strptime(dtstr, fmt)
@@ -26,6 +34,7 @@ def gen_datestr(dtstr, delta=0, fmt='%Y/%m/%d'):
 
 
 def fetch(params):
+    import urllib.request, urllib.error
     root = params['root']
     start_date = params['start_date']
     delta = 0
@@ -42,16 +51,15 @@ def fetch(params):
             f = open(fn, 'w', encoding='utf8')
             f.write(page)
             f.close()
-            delta = delta + 1
 #            sqls.append("insert into post_record (post_date, post_num) values('"+datestr+"', " + str(post_num) + ")")
         except Exception as err:
             e = str(err)
             if(urllib.error.HTTPError == type(err))and(404 == err.code):
-                delta = delta + 1
                 post_num = 0
                 e = '404'
             sqls.append("update post_record set status = '" + e + "', post_num =" + str(post_num) + " where post_date = '" + datestr + "';")
         finally:
+            delta = delta + 1
             for sql in sqls:
                 print(sql)
                 db(params, sql)
@@ -59,20 +67,30 @@ def fetch(params):
     
 
 def gen_txt(params):
+# https://docs.python.org/3/library/html.parser.html
+    hp = WPHTMLParser()
     while(True):
         posts = db(params, 'select post_date from post_record where post_num = -1')
         for ps in posts:
             post_date = ps[0]
             f = open(post_date+'/page.html', 'r')
-            ls = f.readlines()
+#            ls = f.readlines()
+            page = f.read()
             f.close()
-            print(len(ls))
+            tmp = cutstr(page, params['head'], params['tail'])
+            hp.feed(tmp)
+#            print(page)
+#            print(hp.handle_starttag('a',))
+            print('=============================')
+            hp.close()
 
 
 def parse_txt(txt):
     tmp = txt
 
 def db(params, sql):
+    import mysql.connector
+    from mysql.connector import connection
     sql = sql.strip()
     res = None
     cnx = connection.MySQLConnection(user=params['db']['dbuser'], password=params['db']['dbpassword'],host=params['db']['dbhost'],database=params['db']['database'])
@@ -90,8 +108,9 @@ def init():
               'root': 'https://gcd0318.wordpress.com/',\
               'head': '<!-- end header -->',\
               'tail':'<!-- begin footer -->',\
-#              'head': '<h3 class="storytitle">',\
-#              'tail':'<h3 class="sd-title">Rate this:</h3>',\
+              'title': '<h3 class="storytitle">',\
+              'meta': '<div class="meta">',\
+              'content':'<div class="storycontent">',\
               'db':{'dbhost':'192.168.1.18',\
                     'dbuser':'wp',\
                     'dbpassword':'wp',\
