@@ -108,7 +108,10 @@ def gen_txt(params):
                 status = ps[1]
                 if(status):
                     post_num, e = get_page(params['post']['root'], post_date)
-                    db(params['db'], "update post_record set status = '" + e + "', post_num =" + str(post_num) + " where post_date = '" + post_date + "';")
+                    if(e):
+                        db(params['db'], "update post_record set status = '" + e + "', post_num =" + str(post_num) + " where post_date = '" + post_date + "';")
+                    else:
+                        db(params['db'], "update post_record set status = NULL, post_num =" + str(post_num) + " where post_date = '" + post_date + "';")
                 else:
                     f = open(post_date+'/page.html', 'r')
                     page = f.read()
