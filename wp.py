@@ -2,7 +2,7 @@
 CREATE TABLE `post_record` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `post_date` varchar(45) NOT NULL,
-  `post_num` int(11) NOT NULL DEFAULT '0',
+  `post_num` int(11) DEFAULT NULL,
   `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `status` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -62,7 +62,7 @@ def gen_datestr(dtstr, delta=0, fmt='%Y/%m/%d'):
 def get_page(root, datestr):
     import urllib.request, urllib.error
     post_num = -1
-    e = 'NULL'
+    e = None
     try:
         page = urllib.request.urlopen(root+gen_datestr(datestr)).read().decode('utf8')
         fn = datestr+'/page.html'
@@ -75,21 +75,24 @@ def get_page(root, datestr):
         e = str(err)
         if(urllib.error.HTTPError == type(err))and(404 == err.code):
             post_num = 0
-            e = '404'
     return post_num, e
 
 def fetch(params):
+    # post_num = -2: no info for post_num
+    # post_num = -1: being sure of post, but not of the num
+    # post_num = 0: no post
+    # post_num = n: n posts
+
     start_date = params['post']['start_date']
     delta = 0
     while(True):
-        sqls = []
         datestr = gen_datestr(start_date, delta)
-        sqls.append("insert into post_record (post_date, post_num) values('"+datestr+"', -1)")
         post_num, e = get_page(params['post']['root'], datestr)
-        sqls.append("update post_record set status = '" + e + "', post_num =" + str(post_num) + " where post_date = '" + datestr + "';")
+        if(e):
+            db(params['db'], "insert into post_record (post_date, post_num, status) values ('" + datestr + "', " + str(post_num) + ", '" + e + "');")
+        else:
+            db(params['db'], "insert into post_record (post_date, post_num) values ('" + datestr + "', " + str(post_num) + ");")
         delta = delta + 1
-        for sql in sqls:
-            db(params['db'], sql)
         time.sleep(5)
     
 
@@ -106,14 +109,14 @@ def gen_txt(params):
                 if(status):
                     post_num, e = get_page(params['post']['root'], post_date)
                     db(params['db'], "update post_record set status = '" + e + "', post_num =" + str(post_num) + " where post_date = '" + post_date + "';")
-                f = open(post_date+'/page.html', 'r')
-                page = f.read()
-                f.close()
-                wphp = WPHTMLParser(post_date)
-                wphp.feed(cutstr(page, params['page']['head'], params['page']['tail']))
-                wphp.close()
-                n = len(page.split(params['page']['title']))
-                db(params['db'], "update post_record set post_num = " + str(n-1) + " where post_date = '" + post_date + "';")
+                else:
+                    f = open(post_date+'/page.html', 'r')
+                    page = f.read()
+                    f.close()
+                    wphp = WPHTMLParser(post_date)
+                    wphp.feed(cutstr(page, params['page']['head'], params['page']['tail']))
+                    wphp.close()
+                    db(params['db'], "update post_record set post_num = " + str(len(page.split(params['page']['title']))-1) + " where post_date = '" + post_date + "';")
 
 
 def parse_txt(txt):
