@@ -15,15 +15,42 @@ import threading, time, datetime, os
 from html.parser import HTMLParser
 
 class WPHTMLParser(HTMLParser):
+    def __init__(self, fp):
+        HTMLParser.__init__(self)
+        self.starttags = []
+        self.fp = fp
+        self.pn = 0
     def handle_starttag(self, tag, attrs):
-        print("Encountered a start tag:", tag)
-        print("Encountered a start attrs:", attrs)
+        if(('h3' == tag.lower()) and (('class', 'storytitle') in attrs)):
+            self.pn = self.pn + 1
+        if('a' == tag.lower()):
+            if((('rel', 'bookmark') in attrs) or (('rel', 'category tag') in attrs)):
+                self.starttags.append(tag.lower())
+#            if(('rel', 'bookmark') in attrs):
+#                print('+++++++++++++++++++++++++++++++++++++++++++++++++')
+        if('div' == tag.lower()):
+            if((('class', 'storycontent') in attrs) or (('class', 'meta') in attrs) or (0 == len(attrs))):
+                self.starttags.append(tag.lower())
 
     def handle_endtag(self, tag):
-        print("Encountered an end tag :", tag)
+        if(0 < len(self.starttags)):
+            if(tag == self.starttags[-1]):
+                self.starttags.pop()
 
     def handle_data(self, data):
-        print("Encountered some data  :", data)
+        data = data.strip()
+        if(0 < self.pn):
+            f = open(self.fp + '/' + str(self.pn) + '.txt', 'a')
+            if(0 < len(data)):
+                if(0 < len(self.starttags)):
+                    if('a' == self.starttags[-1]):
+                        print(data)
+                        print(data, file=f)
+                    if('div' == self.starttags[-1]):
+                        print(data)
+                        print(data, file=f)
+            f.close()
+
 
 def cutstr(s, h, t):
     return s[s.find(h):s.rfind(t)]
@@ -68,7 +95,6 @@ def fetch(params):
 
 def gen_txt(params):
 # https://docs.python.org/3/library/html.parser.html
-    hp = WPHTMLParser()
     while(True):
         posts = db(params, 'select post_date from post_record where post_num = -1')
         for ps in posts:
@@ -77,12 +103,10 @@ def gen_txt(params):
 #            ls = f.readlines()
             page = f.read()
             f.close()
-            tmp = cutstr(page, params['head'], params['tail'])
-            hp.feed(tmp)
-#            print(page)
-#            print(hp.handle_starttag('a',))
+            wphp = WPHTMLParser(post_date)
+            wphp.feed(cutstr(page, params['head'], params['tail']))
             print('=============================')
-            hp.close()
+            wphp.close()
 
 
 def parse_txt(txt):
@@ -132,8 +156,8 @@ if('__main__' == __name__):
     params = init()
 
     ts = []
-#    t1 = threading.Thread(target=fetch, args=(params,))
-#    ts.append(t1)
+    t1 = threading.Thread(target=fetch, args=(params,))
+    ts.append(t1)
     t2 = threading.Thread(target=gen_txt, args=(params,))
     ts.append(t2)
 #    t3 = threading.Thread(target=parse, args=())
