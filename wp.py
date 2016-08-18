@@ -163,6 +163,7 @@ def init():
     sd = db(params['db'], 'select post_date from post_record order by post_date desc limit 1')
     if(0 < len(sd)):
         params['post']['start_date'] = sd[0][0]
+        db(params['db'], "delete from post_record where post_date = '" + params['post']['start_date'] + "';")
     else:
         params['post']['start_date'] = start_date
     return params
