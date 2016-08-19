@@ -78,21 +78,19 @@ def get_page(root, datestr):
     return post_num, e
 
 def fetch(params):
-    # post_num = -2: no info for post_num
-    # post_num = -1: being sure of post, but not of the num
-    # post_num = 0: no post
-    # post_num = n: n posts
-
     start_date = params['post']['start_date']
     delta = 0
     while(True):
         datestr = gen_datestr(start_date, delta)
-        post_num, e = get_page(params['post']['root'], datestr)
-        if(e):
-            db(params['db'], "insert into post_record (post_date, post_num, status) values ('" + datestr + "', " + str(post_num) + ", '" + e + "');")
+        if(datetime.datetime.now().strftime('%Y/%m/%d') >= datestr):
+            post_num, e = get_page(params['post']['root'], datestr)
+            if(e):
+                db(params['db'], "insert into post_record (post_date, post_num, status) values ('" + datestr + "', " + str(post_num) + ", '" + e + "');")
+            else:
+                db(params['db'], "insert into post_record (post_date, post_num) values ('" + datestr + "', " + str(post_num) + ");")
+            delta = delta + 1
         else:
-            db(params['db'], "insert into post_record (post_date, post_num) values ('" + datestr + "', " + str(post_num) + ");")
-        delta = delta + 1
+            print('too new')
         time.sleep(5)
     
 
@@ -141,7 +139,7 @@ def db(dbp, sql):
     return res
 
 def init():
-    start_date = '2005/08/28'
+    start_date = '2016/08/18'
     params = {'post':{'start_date': '',\
                       'root': 'https://gcd0318.wordpress.com/',\
                     },\
