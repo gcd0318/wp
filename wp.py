@@ -64,7 +64,7 @@ def get_page(root, datestr):
     post_num = -1
     e = None
     try:
-        page = urllib.request.urlopen(root+gen_datestr(datestr)).read().decode('utf8')
+        page = urllib.request.urlopen(root+gen_datestr(datestr), timeout=60).read().decode('utf8')
         fn = datestr+'/page.html'
         if(not os.path.exists(datestr)):
             os.makedirs(datestr)
@@ -89,8 +89,6 @@ def fetch(params):
             else:
                 db(params['db'], "insert into post_record (post_date) values ('" + datestr + "');")
             delta = delta + 1
-        else:
-            print('too new')
         time.sleep(5)
     
 
@@ -118,6 +116,7 @@ def gen_txt(params):
                     wphp.feed(cutstr(page, params['page']['head'], params['page']['tail']))
                     wphp.close()
                     db(params['db'], "update post_record set post_num = " + str(len(page.split(params['page']['title']))-1) + " where post_date = '" + post_date + "';")
+                time.sleep(5)
 
 
 def parse_txt(txt):
