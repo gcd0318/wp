@@ -2,7 +2,7 @@
 CREATE TABLE `post_record` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `post_date` varchar(45) NOT NULL,
-  `post_num` int(11) DEFAULT NULL,
+  `post_num` int(11) DEFAULT '-1',
   `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `status` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -87,7 +87,7 @@ def fetch(params):
             if(e):
                 db(params['db'], "insert into post_record (post_date, post_num, status) values ('" + datestr + "', " + str(post_num) + ", '" + e + "');")
             else:
-                db(params['db'], "insert into post_record (post_date, post_num) values ('" + datestr + "', " + str(post_num) + ");")
+                db(params['db'], "insert into post_record (post_date) values ('" + datestr + "');")
             delta = delta + 1
         else:
             print('too new')
@@ -139,7 +139,7 @@ def db(dbp, sql):
     return res
 
 def init():
-    start_date = '2016/08/18'
+    start_date = '2005/08/28'
     params = {'post':{'start_date': '',\
                       'root': 'https://gcd0318.wordpress.com/',\
                     },\
