@@ -17,37 +17,40 @@ from html.parser import HTMLParser
 class WPHTMLParser(HTMLParser):
     def __init__(self, fp):
         HTMLParser.__init__(self)
-        self.starttags = []
+        self.tags = []
+        self.outs = []
         self.fp = fp
         self.pn = 0
     def handle_starttag(self, tag, attrs):
-        if(('h3' == tag.lower()) and (('class', 'storytitle') in attrs)):
+        tag = tag.lower()
+        self.tags.append(tag)
+        if(('h3' == tag) and (('class', 'storytitle') in attrs)):
             self.pn = self.pn + 1
             f = open(self.fp + '/' + str(self.pn) + '.txt', 'w')
             f.close()
-        if('a' == tag.lower()):
-            if((('rel', 'bookmark') in attrs) or (('rel', 'category tag') in attrs)):
-                self.starttags.append(tag.lower())
-#            if(('rel', 'bookmark') in attrs):
-#                print('+++++++++++++++++++++++++++++++++++++++++++++++++')
-        if('div' == tag.lower()):
-            if((('class', 'storycontent') in attrs) or (('class', 'meta') in attrs) or (0 == len(attrs))):
-                self.starttags.append(tag.lower())
+        if('a' == tag):
+            self.outs.append((('rel', 'bookmark') in attrs) or (('rel', 'category tag') in attrs))
+        if('div' == tag):
+            self.outs.append((('class', 'storycontent') in attrs) or (('class', 'meta') in attrs) or (0 == len(attrs)))
 
     def handle_endtag(self, tag):
-        if(0 < len(self.starttags)):
-            if(tag == self.starttags[-1]):
-                self.starttags.pop()
+        if((tag == self.tags[-1]) and (0 < len(self.outs))):
+            self.tags.pop()
+            self.outs.pop()
+
+    def handle_startendtag(self, tag, attrs):
+        tag = tag.lower()
+        if(self.outs[-1])and (tag in ('br')):
+            self.tags.append(tag)
+            self.outs.append(True)
 
     def handle_data(self, data):
         data = data.strip()
         if(0 < self.pn):
             f = open(self.fp + '/' + str(self.pn) + '.txt', 'a')
             if(0 < len(data)):
-                if(0 < len(self.starttags)):
-                    if('a' == self.starttags[-1]):
-                        f.write(data + '\n')
-                    if('div' == self.starttags[-1]):
+                if((0 < len(self.outs)) and (self.outs[-1])):
+                    if(self.tags[-1] in ('a', 'div')):
                         f.write(data + '\n')
             f.close()
 
