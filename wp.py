@@ -25,18 +25,20 @@ class WPHTMLParser(HTMLParser):
     def handle_starttag(self, tag, attrs):
         tag = tag.lower()
         self.tags.append(tag)
+        out = False
         if('h3' == tag):
-            self.outs.append(('class', 'storytitle') in attrs)
-            if(self.outs[-1]):
+            out = (('class', 'storytitle') in attrs)
+            if(out):
                 self.pn = self.pn + 1
                 f = open(self.fp + '/' + str(self.pn) + '.txt', 'w')
                 f.close()
         if('a' == tag):
-            self.outs.append((('rel', 'bookmark') in attrs) or (('rel', 'category tag') in attrs))
+            out = (('rel', 'bookmark') in attrs) or (('rel', 'category tag') in attrs)
         if('div' == tag):
-            self.outs.append((('class', 'storycontent') in attrs) or (('class', 'meta') in attrs) or (('class', 'bvMsg') in attrs) or (0 == len(attrs)))
+            out = (('class', 'storycontent') in attrs) or (('class', 'meta') in attrs) or (('class', 'bvMsg') in attrs) or (0 == len(attrs))
         if('p' == tag):
-            self.outs.append(self.outs[-1])
+            out = self.outs[-1]
+        self.outs.append(out)
 
     def out2file(self):
         if(0 < self.pn):
@@ -48,10 +50,11 @@ class WPHTMLParser(HTMLParser):
             f.close()
 
     def handle_endtag(self, tag):
-        if((tag == self.tags[-1]) and (0 < len(self.outs)) and (self.outs[-1])):
+        if((tag == self.tags[-1]) and (0 < len(self.outs))):
+            if(self.outs[-1]):
+                self.out2file()
             self.tags.pop()
             self.outs.pop()
-            self.out2file()
 
 
     def handle_startendtag(self, tag, attrs):
