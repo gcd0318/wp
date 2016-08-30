@@ -132,6 +132,12 @@ def gen_txt(params):
                     db(params['db'], "update post_record set post_num = " + str(len(page.split(params['page']['title']))-1) + " where post_date = '" + post_date + "';")
                 time.sleep(5)
 
+def ins(d, s):
+    if(s in d):
+        d[s] = d[s] + 1
+    else:
+        d[s] = 1
+
 def parse(fn):
     import re
     zp = re.compile('[\u4e00-\u9fa5]+')
@@ -150,7 +156,15 @@ def parse(fn):
                 l = l.replace(sub, '')
             else:
                 l = l[1:]
-    print(csl)
+    csd = {}
+    for cs in csl:
+        for i in range(len(cs)):
+            j = 0
+            while(j < len(cs) - i):
+                ins(csd, cs[j:j + i + 1])
+                j = j + 1
+    for cs in csd:
+        print(cs, csd[cs])
 
 def parse_txt(p):
     for root,dirs,files in os.walk(p):
