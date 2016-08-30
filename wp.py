@@ -132,9 +132,31 @@ def gen_txt(params):
                     db(params['db'], "update post_record set post_num = " + str(len(page.split(params['page']['title']))-1) + " where post_date = '" + post_date + "';")
                 time.sleep(5)
 
+def parse(fn):
+    import re
+    zp = re.compile('[\u4e00-\u9fa5]+')
+    f = open(fn)
+    ls = f.readlines()
+    f.close()
+    csl = []
+    for l in ls:
+        l = l.strip()
+        while(0 < len(l)):
+            sub = ''
+            m = zp.search(l)
+            if(m):
+                sub = m.group(0)
+                csl.append(sub)
+                l = l.replace(sub, '')
+            else:
+                l = l[1:]
+    print(csl)
 
-def parse_txt(txt):
-    tmp = txt
+def parse_txt(p):
+    for root,dirs,files in os.walk(p):
+        for fn in files:
+            if(fn.endswith('.txt')):
+                parse(root + os.sep + fn)
 
 def db(dbp, sql):
     print(sql)
@@ -184,12 +206,12 @@ if('__main__' == __name__):
     params = init()
 
     ts = []
-    t1 = threading.Thread(target=fetch, args=(params,))
-    ts.append(t1)
-    t2 = threading.Thread(target=gen_txt, args=(params,))
-    ts.append(t2)
-#    t3 = threading.Thread(target=parse, args=())
-#    ts.append(t3)
+#    t1 = threading.Thread(target=fetch, args=(params,))
+#    ts.append(t1)
+#    t2 = threading.Thread(target=gen_txt, args=(params,))
+#    ts.append(t2)
+    t3 = threading.Thread(target=parse_txt, args=('.',))
+    ts.append(t3)
 #    t4 = threading.Thread(target=static, args=())
 #    ts.append(t4)
     for t in ts:
