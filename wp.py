@@ -1,16 +1,3 @@
-"""
-CREATE TABLE `post_record` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `post_date` varchar(45) NOT NULL,
-  `post_num` int(11) DEFAULT '-1',
-  `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `status` varchar(45) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-"""
-
 import threading, time, datetime, os
 from html.parser import HTMLParser
 
@@ -66,8 +53,11 @@ class WPHTMLParser(HTMLParser):
         self.data = data.strip()
 
 
-def cutstr(s, h, t):
-    return s[s.find(h):s.rfind(t)]
+def cutstr(s, h, t=None):
+    res = s[s.find(h):]
+    if(t):
+        res = res[:s.rfind(t)]
+    return res
 
 def gen_datestr(dtstr, delta=0, fmt='%Y/%m/%d'):
     nt = time.strptime(dtstr, fmt)
@@ -104,7 +94,7 @@ def fetch(params):
                 db(params['db'], "insert into post_record (post_date) values ('" + datestr + "');")
             delta = delta + 1
         time.sleep(5)
-    
+
 
 def gen_txt(params):
 # https://docs.python.org/3/library/html.parser.html
@@ -117,11 +107,7 @@ def gen_txt(params):
                 post_date = ps[0]
                 status = ps[1]
                 if(status):
-                    post_num, e = get_page(params['post']['root'], post_date)
-                    if(e):
-                        db(params['db'], "update post_record set status = '" + e + "', post_num =" + str(post_num) + " where post_date = '" + post_date + "';")
-                    else:
-                        db(params['db'], "update post_record set status = NULL, post_num =" + str(post_num) + " where post_date = '" + post_date + "';")
+                    re_fetch(params, post_date)
                 else:
                     f = open(post_date+'/page.html', 'r')
                     page = f.read()
@@ -138,6 +124,15 @@ def ins(d, s):
     else:
         d[s] = 1
 
+def re_fetch(params, post_date):
+    e = None
+    post_num, e = get_page(params['post']['root'], post_date)
+    if(e):
+        db(params['db'], "update post_record set status = '" + e + "', post_num =" + str(post_num) + " where post_date = '" + post_date + "';")
+    else:
+        db(params['db'], "update post_record set status = NULL, post_num =" + str(post_num) + " where post_date = '" + post_date + "';")
+
+
 def parse(fn):
     import re
     zp = re.compile('[\u4e00-\u9fa5]+')
@@ -145,8 +140,14 @@ def parse(fn):
     ls = f.readlines()
     f.close()
     csl = []
+    title = ls[0].strip()
+    category = ls[1].strip()
+    post_time = cutstr(ls[2], '@')[1:].strip()
+    length = 0
+    ls = ls[3:] + ls[:1]
     for l in ls:
         l = l.strip()
+        length = length + len(l)
         while(0 < len(l)):
             sub = ''
             m = zp.search(l)
@@ -156,6 +157,7 @@ def parse(fn):
                 l = l.replace(sub, '')
             else:
                 l = l[1:]
+    
     csd = {}
     for cs in csl:
         for i in range(len(cs)):
@@ -163,14 +165,50 @@ def parse(fn):
             while(j < len(cs) - i):
                 ins(csd, cs[j:j + i + 1])
                 j = j + 1
-    for cs in csd:
-        print(cs, csd[cs])
+    return title, category, post_time, length, csd
 
-def parse_txt(p):
+def parse_txt(params, p):
     for root,dirs,files in os.walk(p):
         for fn in files:
+            post_date = root[1:]
             if(fn.endswith('.txt')):
-                parse(root + os.sep + fn)
+                post_order = fn[:-4]
+                title, category, post_time, length, csd = parse(root + os.sep + fn)
+                print(title, category, post_time, root, length, fn[:-4], csd)
+                posts = db(params['db'], "select * from post where post_date ='" + post_date + "' and post_order = " + str(post_order) + ";" )
+                if(0 == len(posts)):
+                    db(params['db'], "insert into post (title, category, length, post_date, post_time, post_order) values ('" +\
+                       title + "','" + category + "'," + str(length) + ",'" + post_date + "','" + post_time + "'," + str(post_order)+");")
+                for cs in csd:
+                    post_id = db(params['db'], "select id from post where post_date = '" + post_date + "' and post_order = " + post_order + ";")[0][0]
+                    word = db(params['db'], "select id from word where text = '" + cs + "';")
+                    if(0 == len(word)):
+                        db(params['db'], "insert into word (text) values ('" + cs + "');")
+                        word = db(params['db'], "select id from word where text = '" + cs + "';")
+                    word_id = word[0][0]
+                    xref = db(params['db'], 'select word_count from word_post where word_id = ' + str(word_id) + ' and post_id = ' + str(post_id) +';')
+                    if(0 == len(xref)):
+                        db(params['db'], 'insert into word_post (word_id, post_id, word_count) values (' + str(word_id) + ',' + str(post_id) + ',0);')
+                    print(post_id, word_id)
+                    db(params['db'], 'update word_post set word_count = word_count+' + str(csd[cs]) + ' where word_id = ' + str(word_id) + ' and post_id = ' + str(post_id) +';')
+
+def static_post(params):
+    posts = db(params['db'], "select id, post_date, post_num, status from wp.post_record where post_num >0 or status not like '%404%'")
+    if(0 == len(posts)):
+        time.sleep(60)
+    else:
+        for ps in posts:
+            post_id = ps[0]
+            post_date = ps[1]
+            post_num = ps[2]
+            status = ps[3]
+            if(status):
+                re_fetch(params, post_date)
+            else:
+                pass
+
+
+
 
 def db(dbp, sql):
     print(sql)
@@ -220,14 +258,16 @@ if('__main__' == __name__):
     params = init()
 
     ts = []
-#    t1 = threading.Thread(target=fetch, args=(params,))
-#    ts.append(t1)
-#    t2 = threading.Thread(target=gen_txt, args=(params,))
-#    ts.append(t2)
-    t3 = threading.Thread(target=parse_txt, args=('.',))
-    ts.append(t3)
-#    t4 = threading.Thread(target=static, args=())
-#    ts.append(t4)
+#    t_fetch = threading.Thread(target=fetch, args=(params,))
+#    ts.append(t_fetch)
+#    t_gen_txt = threading.Thread(target=gen_txt, args=(params,))
+#    ts.append(t_gen_txt)
+    t_parse_txt = threading.Thread(target=parse_txt, args=(params, '.',))
+    ts.append(t_parse_txt)
+#    t_static_post = threading.Thread(target=static_post, args=(params,))
+#    ts.append(t_static_post)
+#    t_static_word = threading.Thread(target=static_word, args=())
+#    ts.append(t_static_word)
     for t in ts:
 #        t.setDaemon(True)
         t.start()
