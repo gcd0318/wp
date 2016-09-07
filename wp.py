@@ -172,7 +172,7 @@ def parse_txt(params, p):
         for fn in files:
             if(fn.endswith('.txt')):
                 post_date = root[2:]
-                parsed = db(params['db'], "select parsed from post_record where post_date = '" + post_date + "';")[0][0]
+                parsed = db(params['db'], "select parsed from post_record where post_date = '" + post_date + "' and parsed <> post_num;")[0][0]
                 if(0 == parsed):
                     print(parsed)
                     post_order = fn[:-4]
@@ -193,7 +193,7 @@ def parse_txt(params, p):
                         if(0 == len(xref)):
                             db(params['db'], 'insert into word_post (word_id, post_id, word_count) values (' + str(word_id) + ',' + str(post_id) + ',0);')
                         db(params['db'], 'update word_post set word_count = word_count+' + str(csd[cs]) + ' where word_id = ' + str(word_id) + ' and post_id = ' + str(post_id) +';')
-                    db(params['db'], "update post_record set parsed = 1 where post_date = '" + post_date + "';")
+                    db(params['db'], "update post_record set parsed = parsed+1 where post_date = '" + post_date + "';")
                 else:
                     partial_parsed = db(params['db'], "select id from post where post_date = '" + post_date + "';")
                     if(0 < len(partial_parsed)):
