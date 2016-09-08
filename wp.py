@@ -56,7 +56,7 @@ class WPHTMLParser(HTMLParser):
 def cutstr(s, h, t=None):
     res = s[s.find(h):]
     if(t):
-        res = res[:s.rfind(t)]
+        res = res[:res.rfind(t)]
     return res
 
 def gen_datestr(dtstr, delta=0, fmt='%Y/%m/%d'):
@@ -274,10 +274,10 @@ if('__main__' == __name__):
     params = init()
 
     ts = []
-#    t_fetch = threading.Thread(target=fetch, args=(params,))
-#    ts.append(t_fetch)
-#    t_gen_txt = threading.Thread(target=gen_txt, args=(params,))
-#    ts.append(t_gen_txt)
+    t_fetch = threading.Thread(target=fetch, args=(params,))
+    ts.append(t_fetch)
+    t_gen_txt = threading.Thread(target=gen_txt, args=(params,))
+    ts.append(t_gen_txt)
     t_parse_txt = threading.Thread(target=parse_txt, args=(params, '.',))
     ts.append(t_parse_txt)
 #    t_static_post = threading.Thread(target=static_post, args=(params,))
