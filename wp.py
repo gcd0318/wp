@@ -168,36 +168,39 @@ def parse(fn):
     return title, category, post_time, length, csd
 
 def parse_txt(params, p):
-    for root,dirs,files in os.walk(p):
-        for fn in files:
-            if(fn.endswith('.txt')):
-                post_date = root[2:]
-                parsed = db(params['db'], "select parsed from post_record where post_date = '" + post_date + "' and parsed <> post_num;")[0][0]
-                if(0 == parsed):
-                    print(parsed)
-                    post_order = fn[:-4]
-                    print(post_date, post_order)
-                    title, category, post_time, length, csd = parse(root + os.sep + fn)
-                    posts = db(params['db'], "select * from post where post_date ='" + post_date + "' and post_order = " + str(post_order) + ";" )
-                    if(0 == len(posts)):
-                        db(params['db'], "insert into post (title, category, length, post_date, post_time, post_order) values ('" +\
-                           title + "','" + category + "'," + str(length) + ",'" + post_date + "','" + post_time + "'," + str(post_order)+");")
-                    for cs in csd:
-                        post_id = db(params['db'], "select id from post where post_date = '" + post_date + "' and post_order = " + post_order + ";")[0][0]
-                        word = db(params['db'], "select id from word where text = '" + cs + "';")
-                        if(0 == len(word)):
-                            db(params['db'], "insert into word (text) values ('" + cs + "');")
+    while(True):
+        post_records = db(params['db'], 'select post_date, post_num, parsed from post_record where post_num > 0 and parsed <> post_num;')
+        if(0 < len(post_records)):
+            for post_record in post_records:
+                post_date = post_record[0]
+                post_num = post_record[1]
+                parsed = post_record[2]
+                for post_order in range(1, post_num+1):
+                    fn = os.sep.join(['.', post_date, str(post_order)]) + '.txt'
+                    if(0 == parsed):
+                        title, category, post_time, length, csd = parse(fn)
+                        posts = db(params['db'], "select * from post where post_date ='" + post_date + "' and post_order = " + str(post_order) + ";" )
+                        if(0 == len(posts)):
+                            db(params['db'], "insert into post (title, category, length, post_date, post_time, post_order) values ('" +\
+                               title + "','" + category + "'," + str(length) + ",'" + post_date + "','" + post_time + "'," + str(post_order)+");")
+                        for cs in csd:
+                            post_id = db(params['db'], "select id from post where post_date = '" + post_date + "' and post_order = " + str(post_order) + ";")[0][0]
                             word = db(params['db'], "select id from word where text = '" + cs + "';")
-                        word_id = word[0][0]
-                        xref = db(params['db'], 'select word_count from word_post where word_id = ' + str(word_id) + ' and post_id = ' + str(post_id) +';')
-                        if(0 == len(xref)):
-                            db(params['db'], 'insert into word_post (word_id, post_id, word_count) values (' + str(word_id) + ',' + str(post_id) + ',0);')
-                        db(params['db'], 'update word_post set word_count = word_count+' + str(csd[cs]) + ' where word_id = ' + str(word_id) + ' and post_id = ' + str(post_id) +';')
-                    db(params['db'], "update post_record set parsed = parsed+1 where post_date = '" + post_date + "';")
-                else:
-                    partial_parsed = db(params['db'], "select id from post where post_date = '" + post_date + "';")
-                    if(0 < len(partial_parsed)):
-                        db(params['db'], "delete from word_post where post_id = " + str(partial_parsed[0][0]) + ";")
+                            if(0 == len(word)):
+                                db(params['db'], "insert into word (text, length) values ('" + cs + "'," + str(len(cs)) + ");")
+                                word = db(params['db'], "select id from word where text = '" + cs + "';")
+                            word_id = word[0][0]
+                            xref = db(params['db'], 'select word_count from word_post where word_id = ' + str(word_id) + ' and post_id = ' + str(post_id) +';')
+                            if(0 == len(xref)):
+                                db(params['db'], 'insert into word_post (word_id, post_id, word_count) values (' + str(word_id) + ',' + str(post_id) + ',0);')
+                            db(params['db'], 'update word_post set word_count = word_count+' + str(csd[cs]) + ' where word_id = ' + str(word_id) + ' and post_id = ' + str(post_id) +';')
+                        db(params['db'], "update post_record set parsed = parsed+1 where post_date = '" + post_date + "';")
+                    else:
+                        partial_parsed = db(params['db'], "select id from post where post_date = '" + post_date + "';")
+                        if(0 < len(partial_parsed)):
+                            db(params['db'], "delete from word_post where post_id = " + str(partial_parsed[0][0]) + ";")
+        else:
+            time.sleep(60)
 
 def static_post(params):
     posts = db(params['db'], "select id, post_date, post_num, status from wp.post_record where post_num >0 or status not like '%404%'")
