@@ -1,6 +1,9 @@
 import threading, time, datetime, os
 from html.parser import HTMLParser
 
+import logging
+import logging.handlers
+
 class WPHTMLParser(HTMLParser):
     def __init__(self, fp):
         HTMLParser.__init__(self)
@@ -176,12 +179,16 @@ def parse_txt(params, p):
                     post_date = post_record[0]
                     post_num = post_record[1]
                     parsed = post_record[2]
+                    posts_to_parse = db(params['db'], "select id from post where post_date = '" + post_date + "';")
+                    if(0 < len(posts_to_parse)):
+                        for post_to_parse in posts_to_parse:
+                            db(params['db'], "delete from word_post where post_id = " + str(post_to_parse[0]) + ";")
                     if(0 == parsed):
                         for i in range(post_num):
                             post_order = i + 1
                             fn = os.sep.join(['.', post_date, str(post_order)]) + '.txt'
                             title, category, post_time, length, csd = parse(fn)
-                            posts = db(params['db'], "select id from post where post_date ='" + post_date + "' and post_order = " + str(post_order) + ";" )
+                            posts = db(params['db'], "select id from post where post_date = '" + post_date + "' and post_order = " + str(post_order) + ";" )
                             if(0 == len(posts)):
                                 db(params['db'], "insert into post (title, category, length, post_date, post_time, post_order) values ('" +\
                                    title + "','" + category + "'," + str(length) + ",'" + post_date + "','" + post_time + "'," + str(post_order)+");")
@@ -198,10 +205,6 @@ def parse_txt(params, p):
                                 db(params['db'], 'update word_post set word_count = word_count+' + str(csd[cs]) + ' where word_id = ' + str(word_id) + ' and post_id = ' + str(post_id) +';')
                             db(params['db'], "update post_record set parsed = parsed+1 where post_date = '" + post_date + "';")
                     else:
-                        partial_parsed_posts = db(params['db'], "select id from post where post_date = '" + post_date + "';")
-                        if(0 < len(partial_parsed_posts)):
-                            for partial_parsed_post in partial_parsed_posts:
-                                db(params['db'], "delete from word_post where post_id = " + str(partial_parsed_post[0]) + ";")
                         db(params['db'], "update post_record set parsed = 0 where post_date = '" + post_date + "';")
             else:
                 time.sleep(60)
@@ -271,6 +274,20 @@ def init():
 
 
 if('__main__' == __name__):
+
+# TODO: logging
+    """
+    LOG_FILE = 'tst.log' 
+    handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes = 1024*1024, backupCount = 5)
+    fmt = '%(asctime)s - %(filename)s:%(lineno)s - %(name)s - %(message)s'
+    formatter = logging.Formatter(fmt)
+    handler.setFormatter(formatter)
+    logger = logging.getLogger('tst')
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+    logger.info('first info message')
+    logger.debug('first debug message') 
+    """
     params = init()
 
     ts = []
