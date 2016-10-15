@@ -20,7 +20,7 @@ class WPHTMLParser(HTMLParser):
             out = (('class', 'storytitle') in attrs)
             if(out):
                 self.pn = self.pn + 1
-                f = open(self.fp + '/' + str(self.pn) + '.txt', 'w')
+                f = open(self.fp + '/' + str(self.pn) + '.txt', 'w', encoding='utf8')
                 f.close()
         if('a' == tag):
             out = (('rel', 'bookmark') in attrs) or (('rel', 'category tag') in attrs)
@@ -32,7 +32,7 @@ class WPHTMLParser(HTMLParser):
 
     def out2file(self):
         if(0 < self.pn):
-            f = open(self.fp + '/' + str(self.pn) + '.txt', 'a')
+            f = open(self.fp + '/' + str(self.pn) + '.txt', 'a', encoding='utf8')
             if(0 < len(self.data)):
                 if((0 < len(self.outs)) and (self.outs[-1])):
                     if(self.tags[-1] in ('a', 'div', 'p')):
@@ -112,7 +112,7 @@ def gen_txt(params):
                 if(status):
                     re_fetch(params, post_date)
                 else:
-                    f = open(post_date+'/page.html', 'r')
+                    f = open(post_date+'/page.html', 'r', encoding='utf8')
                     page = f.read()
                     f.close()
                     wphp = WPHTMLParser(post_date)
@@ -139,7 +139,7 @@ def re_fetch(params, post_date):
 def parse(fn):
     import re
     zp = re.compile('[\u4e00-\u9fa5]+')
-    f = open(fn)
+    f = open(fn, 'r', encoding='utf8')
     ls = f.readlines()
     f.close()
     csl = []
@@ -255,12 +255,12 @@ def init():
                       'meta': '<div class="meta">',\
                       'content':'<div class="storycontent">',\
                     },\
-              'db':{'dbhost':'192.168.1.18',\
-                    'dbuser':'wp',\
-                    'dbpassword':'wp',\
-#              'db':{'dbhost':'localhost',\
-#                    'dbuser':'root',\
-#                    'dbpassword':'root',\
+#              'db':{'dbhost':'192.168.1.18',\
+#                    'dbuser':'wp',\
+#                    'dbpassword':'wp',\
+              'db':{'dbhost':'localhost',\
+                    'dbuser':'root',\
+                    'dbpassword':'root',\
                     'database':'wp',\
                 },\
               }
