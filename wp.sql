@@ -65,7 +65,7 @@ DROP TABLE IF EXISTS `word`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `word` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `text` varchar(45) NOT NULL,
+  `text` varchar(1024) NOT NULL,
   `length` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`)
