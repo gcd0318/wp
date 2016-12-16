@@ -162,12 +162,15 @@ def parse(fn):
                 l = l[1:]
     
     csd = {}
+    f = open(fn.replace('.txt', '_lines.txt'), 'w', encoding='utf8')
     for cs in csl:
+        print(cs, file=f)
         for i in range(len(cs)):
             j = 0
             while(j < len(cs) - i):
                 ins(csd, cs[j:j + i + 1])
                 j = j + 1
+    f.close()
     return title, category, post_time, length, csd
 
 def parse_txt(params, p):
@@ -297,8 +300,8 @@ if('__main__' == __name__):
     ts.append(t_gen_txt)
     t_parse_txt = threading.Thread(target=parse_txt, args=(params, '.',))
     ts.append(t_parse_txt)
-#    t_static_post = threading.Thread(target=static_post, args=(params,))
-#    ts.append(t_static_post)
+    t_static_post = threading.Thread(target=static_post, args=(params,))
+    ts.append(t_static_post)
 #    t_static_word = threading.Thread(target=static_word, args=())
 #    ts.append(t_static_word)
     for t in ts:
