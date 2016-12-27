@@ -3,6 +3,11 @@ from html.parser import HTMLParser
 
 import logging
 import logging.handlers
+logger = logging.getLogger()
+fh = logging.handlers.TimedRotatingFileHandler('wp.log', "D", 1, 30)
+fh.setFormatter(logging.Formatter('%(asctime)s %(filename)s [line:%(lineno)d]: %(levelname)s %(message)s', '%a, %d %b %Y %H:%M:%S'))
+logger.addHandler(fh)
+logger.setLevel(logging.DEBUG)
 
 class WPHTMLParser(HTMLParser):
     def __init__(self, fp):
@@ -212,7 +217,7 @@ def parse_txt(params, p):
             else:
                 time.sleep(60)
         except Exception as err:
-            print(err)
+            logger.error(err)
 
 def static_post(params):
     posts = db(params['db'], "select id, post_date, post_num, status from wp.post_record where post_num >0 or status not like '%404%'")
@@ -233,7 +238,7 @@ def static_post(params):
 
 
 def db(dbp, sql):
-    print(sql)
+    logger.info(sql)
     import mysql.connector
     from mysql.connector import connection
     sql = sql.strip()
@@ -277,20 +282,6 @@ def init():
 
 
 if('__main__' == __name__):
-
-# TODO: logging
-    """
-    LOG_FILE = 'tst.log' 
-    handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes = 1024*1024, backupCount = 5)
-    fmt = '%(asctime)s - %(filename)s:%(lineno)s - %(name)s - %(message)s'
-    formatter = logging.Formatter(fmt)
-    handler.setFormatter(formatter)
-    logger = logging.getLogger('tst')
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
-    logger.info('first info message')
-    logger.debug('first debug message') 
-    """
     params = init()
 
     ts = []
