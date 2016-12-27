@@ -5,7 +5,7 @@ import logging
 import logging.handlers
 logger = logging.getLogger()
 fh = logging.handlers.TimedRotatingFileHandler('wp.log', "D", 1, 30)
-fh.setFormatter(logging.Formatter('%(asctime)s %(filename)s [line:%(lineno)d]: %(levelname)s %(message)s', '%a, %d %b %Y %H:%M:%S'))
+fh.setFormatter(logging.Formatter('%(asctime)s %(filename)s_%(lineno)d: [%(levelname)s] %(message)s', '%a, %d %b %Y %H:%M:%S'))
 logger.addHandler(fh)
 logger.setLevel(logging.DEBUG)
 
