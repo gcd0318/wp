@@ -4,7 +4,7 @@ from html.parser import HTMLParser
 import logging
 import logging.handlers
 logger = logging.getLogger()
-fh = logging.handlers.TimedRotatingFileHandler('wp.log', "H", 1, 24)
+fh = logging.handlers.TimedRotatingFileHandler('wp.log', "D", 1, 10)
 fh.setFormatter(logging.Formatter('%(asctime)s %(filename)s_%(lineno)d: [%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S'))
 logger.addHandler(fh)
 logger.setLevel(logging.DEBUG)
