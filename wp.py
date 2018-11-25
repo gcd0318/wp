@@ -94,7 +94,7 @@ def fetch(params):
     delta = 0
     while(True):
         datestr = gen_datestr(start_date, delta)
-        if(datetime.datetime.now().strftime('%Y/%m/%d') >= datestr):
+        if(datetime.datetime.now().strftime('%Y/%m/%d') > datestr):
             post_num, e = get_page(params['post']['root'], datestr)
             if(e):
                 db(params['db'], "insert into post_record (post_date, post_num, status) values ('" + datestr + "', " + str(post_num) + ", '" + e + "');")
