@@ -75,18 +75,19 @@ def get_page(root, datestr):
     import urllib.request, urllib.error
     post_num = -1
     e = None
-    try:
-        page = urllib.request.urlopen(root+gen_datestr(datestr), timeout=60).read().decode('utf8')
-        fn = datestr+'/page.html'
-        if(not os.path.exists(datestr)):
-            os.makedirs(datestr)
-        f = open(fn, 'w', encoding='utf8')
-        f.write(page)
-        f.close()
-    except Exception as err:
-        e = str(err)
-        if(urllib.error.HTTPError == type(err))and(404 == err.code):
-            post_num = 0
+    while (post_num < 0):
+        try:
+            page = urllib.request.urlopen(root+gen_datestr(datestr), timeout=60).read().decode('utf8')
+            fn = datestr+'/page.html'
+            if(not os.path.exists(datestr)):
+                os.makedirs(datestr)
+            f = open(fn, 'w', encoding='utf8')
+            f.write(page)
+            f.close()
+        except Exception as err:
+            e = str(err)
+            if(urllib.error.HTTPError == type(err))and(404 == err.code):
+                post_num = 0
     return post_num, e
 
 def fetch(params):
@@ -267,8 +268,8 @@ def init():
 #                    'dbuser':'wp',\
 #                    'dbpassword':'wp',\
               'db':{'dbhost':'localhost',\
-                    'dbuser':'root',\
-                    'dbpassword':'root',\
+                    'dbuser':'wp',\
+                    'dbpassword':'wp',\
                     'database':'wp',\
                 },\
               }
