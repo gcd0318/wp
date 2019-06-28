@@ -77,7 +77,7 @@ def get_page(root, datestr):
     e = None
     while (post_num < 0):
         try:
-            page = urllib.request.urlopen(root+gen_datestr(datestr), timeout=600).read().decode('utf8')
+            page = urllib.request.urlopen(root+gen_datestr(datestr), timeout=60).read().decode('utf8')
             fn = datestr+'/page.html'
             if(not os.path.exists(datestr)):
                 os.makedirs(datestr)
