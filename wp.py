@@ -86,6 +86,7 @@ def get_page(root, datestr):
             f.close()
         except Exception as err:
             e = str(err)
+            logger.error(e)
             if(urllib.error.HTTPError == type(err))and(404 == err.code):
                 post_num = 0
     return post_num, e
