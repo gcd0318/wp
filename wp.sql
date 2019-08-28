@@ -26,7 +26,7 @@ DROP TABLE IF EXISTS `post`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `post` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `title` varchar(45) NOT NULL,
+  `title` varchar(128) NOT NULL,
   `category` varchar(45) NOT NULL,
   `length` int(11) NOT NULL DEFAULT '-1',
   `post_date` varchar(45) NOT NULL,
