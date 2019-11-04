@@ -1,4 +1,10 @@
-import threading, time, datetime, os
+import datetime
+import os
+import threading
+import time
+import traceback
+import requests
+
 from html.parser import HTMLParser
 
 import logging
@@ -69,25 +75,29 @@ def cutstr(s, h, t=None):
 
 def gen_datestr(dtstr, delta=0, fmt='%Y/%m/%d'):
     nt = time.strptime(dtstr, fmt)
-    return (datetime.date(nt[0],nt[1],nt[2])+datetime.timedelta(delta)).strftime(fmt)
+    return (datetime.date(nt[0],nt[1],nt[2]) + datetime.timedelta(delta)).strftime(fmt)
 
 def get_page(root, datestr):
     import urllib.request, urllib.error
-    post_num = -1
+    post_num = None
     e = None
-    while (post_num < 0):
+    while post_num is None:
         try:
-            page = urllib.request.urlopen(root+gen_datestr(datestr), timeout=60).read().decode('utf8')
+#            page = requests.get(root+gen_datestr(datestr), headers={'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit'}, timeout=60).text
+            page = urllib.request.urlopen(root + gen_datestr(datestr), timeout=60).read().decode('utf8')
+#            print(page)
+#            print(type(page))
             fn = datestr+'/page.html'
             if(not os.path.exists(datestr)):
                 os.makedirs(datestr)
-            f = open(fn, 'w', encoding='utf8')
-            f.write(page)
-            f.close()
+            with open(fn, 'w', encoding='utf8') as f:
+                f.write(page)
+            logger.info('page of ' + datestr + ' has been stored')
+            post_num = -1
         except Exception as err:
-            e = str(err)
-            logger.error(e)
-            if(urllib.error.HTTPError == type(err))and(404 == err.code):
+            logger.error(str(err))
+            logger.error(traceback.format_exc())
+            if(urllib.error.HTTPError == type(err)) and (404 == err.code):
                 post_num = 0
     return post_num, e
 
@@ -219,7 +229,8 @@ def parse_txt(params, p):
             else:
                 time.sleep(60)
         except Exception as err:
-            logger.error(err)
+            logger.error(str(err))
+            logger.error(traceback.format_exc())
 
 def static_post(params):
     posts = db(params['db'], "select id, post_date, post_num, status from wp.post_record where post_num >0 or status not like '%404%'")
