@@ -60,7 +60,7 @@ class WPHTMLParser(HTMLParser):
 
     def handle_startendtag(self, tag, attrs):
         tag = tag.lower()
-        if(self.outs[-1])and (tag in ('br')):
+        if(self.outs[-1]) and (tag in ('br')):
             self.out2file()
 
     def handle_data(self, data):
@@ -85,8 +85,6 @@ def get_page(root, datestr):
         try:
 #            page = requests.get(root+gen_datestr(datestr), headers={'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit'}, timeout=60).text
             page = urllib.request.urlopen(root + gen_datestr(datestr), timeout=60).read().decode('utf8')
-#            print(page)
-#            print(type(page))
             fn = datestr+'/page.html'
             if(not os.path.exists(datestr)):
                 os.makedirs(datestr)
@@ -95,7 +93,9 @@ def get_page(root, datestr):
             logger.info('page of ' + datestr + ' has been stored')
             post_num = -1
         except Exception as err:
-            logger.error(str(err))
+            logger.debug(datestr)
+            e = str(err)
+            logger.error(e)
             logger.error(traceback.format_exc())
             if(urllib.error.HTTPError == type(err)) and (404 == err.code):
                 post_num = 0
