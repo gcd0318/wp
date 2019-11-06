@@ -23,6 +23,7 @@ class WPHTMLParser(HTMLParser):
         self.fp = fp
         self.pn = 0
         self.data = ''
+
     def handle_starttag(self, tag, attrs):
         tag = tag.lower()
         self.tags.append(tag)
@@ -43,12 +44,12 @@ class WPHTMLParser(HTMLParser):
 
     def out2file(self):
         if(0 < self.pn):
-            f = open(self.fp + '/' + str(self.pn) + '.txt', 'a', encoding='utf8')
             if(0 < len(self.data)):
+                f = open(self.fp + '/' + str(self.pn) + '.txt', 'a', encoding='utf8')
                 if((0 < len(self.outs)) and (self.outs[-1])):
                     if(self.tags[-1] in ('a', 'div', 'p')):
                         f.write(self.data + '\n')
-            f.close()
+                f.close()
 
     def handle_endtag(self, tag):
         if((tag == self.tags[-1]) and (0 < len(self.outs))):
