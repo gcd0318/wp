@@ -94,7 +94,7 @@ def get_page(root, datestr):
             logger.info('page of ' + datestr + ' has been stored')
             post_num = -1
         except Exception as err:
-            logger.debug(datestr)
+            logger.debug(datestr + ' has no post')
             e = str(err)
             logger.error(e)
             logger.error(traceback.format_exc())
