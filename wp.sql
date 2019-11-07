@@ -49,7 +49,7 @@ CREATE TABLE `post_record` (
   `post_date` varchar(45) NOT NULL,
   `post_num` int(11) NOT NULL DEFAULT '-1',
   `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `status` varchar(45) DEFAULT NULL,
+  `status` varchar(128) DEFAULT NULL,
   `parsed` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`)
