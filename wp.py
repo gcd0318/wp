@@ -91,7 +91,7 @@ def get_page(root, datestr):
                 os.makedirs(datestr)
             with open(fn, 'w', encoding='utf8') as f:
                 f.write(page)
-            logger.info('page of ' + datestr + ' has been stored')
+            logger.info('page of ' + datestr + ' has been stored as ' + fn)
             post_num = -1
         except Exception as err:
             logger.debug(datestr + ' has no post')
