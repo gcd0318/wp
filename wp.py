@@ -85,7 +85,7 @@ def get_page(root, datestr):
     while post_num is None:
         try:
 #            page = requests.get(root+gen_datestr(datestr), headers={'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit'}, timeout=60).text
-            page = urllib.request.urlopen(root + gen_datestr(datestr), timeout=60).read().decode('utf8')
+            page = urllib.request.urlopen(root + datestr, timeout=60).read().decode('utf8')
             fn = datestr+'/page.html'
             if(not os.path.exists(datestr)):
                 os.makedirs(datestr)
