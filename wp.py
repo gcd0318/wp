@@ -40,6 +40,11 @@ class WPHTMLParser(HTMLParser):
             out = (('class', 'storycontent') in attrs) or (('class', 'meta') in attrs) or (('class', 'bvMsg') in attrs) or (0 == len(attrs))
         if('p' == tag):
             out = self.outs[-1]
+        if('br' == tag):
+            out = self.outs.pop()
+            self.tags.pop()
+            self.out2file()
+
         self.outs.append(out)
 
     def out2file(self):
