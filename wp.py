@@ -42,10 +42,10 @@ class WPHTMLParser(HTMLParser):
             out = self.outs.pop()
             self.tags.pop()
             self.out2file()
-        else:
-#        elif('pre' == tag):
-#            out = self.outs[-1]
-#        elif('p' == tag):
+#        else:
+        elif('pre' == tag):
+            out = self.outs[-1]
+        elif('p' == tag):
             out = self.outs[-1]
         self.outs.append(out)
 
