@@ -36,15 +36,17 @@ class WPHTMLParser(HTMLParser):
                 f.close()
         if('a' == tag):
             out = (('rel', 'bookmark') in attrs) or (('rel', 'category tag') in attrs)
-        if('div' == tag):
+        elif('div' == tag):
             out = (('class', 'storycontent') in attrs) or (('class', 'meta') in attrs) or (('class', 'bvMsg') in attrs) or (0 == len(attrs))
-        if('p' == tag):
-            out = self.outs[-1]
-        if('br' == tag):
+        elif('br' == tag):
             out = self.outs.pop()
             self.tags.pop()
             self.out2file()
-
+        else:
+#        elif('pre' == tag):
+#            out = self.outs[-1]
+#        elif('p' == tag):
+            out = self.outs[-1]
         self.outs.append(out)
 
     def out2file(self):
