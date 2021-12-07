@@ -93,7 +93,7 @@ def get_page(root, datestr):
         try:
 #            page = requests.get(root+gen_datestr(datestr), headers={'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit'}, timeout=60).text
             page = urllib.request.urlopen(root + datestr, timeout=60).read().decode('utf8')
-            fn = datestr+'/page.html'
+            fn = datestr + '/page.html'
             if(not os.path.exists(datestr)):
                 os.makedirs(datestr)
             with open(fn, 'w', encoding='utf8') as f:
@@ -275,24 +275,28 @@ def db(dbp, sql):
 
 def init():
     start_date = '2005/08/28'
-    params = {'post':{'start_date': '',\
-                      'root': 'https://gcd0318.wordpress.com/',\
-                    },\
-              'page':{'head': '<!-- end header -->',\
-                      'tail':'<!-- begin footer -->',\
-                      'title': '<h3 class="storytitle">',\
-                      'meta': '<div class="meta">',\
-                      'content':'<div class="storycontent">',\
-                    },\
+    params = {
+            'post': {
+                'start_date': '',
+                'root': 'https://gcd0318.wordpress.com/',
+                },
+            'page': {
+                'head': '<!-- end header -->',
+                'tail':'<!-- begin footer -->',
+                'title': '<h3 class="storytitle">',
+                'meta': '<div class="meta">',
+                'content':'<div class="storycontent">',
+                },
 #              'db':{'dbhost':'192.168.1.18',\
 #                    'dbuser':'wp',\
 #                    'dbpassword':'wp',\
-              'db':{'dbhost':'localhost',\
-                    'dbuser':'wp',\
-                    'dbpassword':'wp',\
-                    'database':'wp',\
-                },\
-              }
+            'db': {
+                'dbhost':'localhost',
+                'dbuser':'wp',
+                'dbpassword':'wp',
+                'database':'wp',
+                },
+            }
     sd = db(params['db'], 'select post_date from post_record order by post_date desc limit 1')
     if(0 < len(sd)):
         params['post']['start_date'] = sd[0][0]
